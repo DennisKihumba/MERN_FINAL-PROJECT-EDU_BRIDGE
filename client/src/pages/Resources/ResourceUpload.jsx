@@ -13,19 +13,22 @@ const ResourceUpload = () => {
     e.preventDefault();
     if (!file || !title) return alert("Title and file are required");
 
-    if (!token) {
-      return alert("You must be logged in to upload resources");
-    }
+    if (!token) return alert("You must be logged in to upload resources");
 
     setUploading(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("title", title);
-    formData.append("description", description);
-
     try {
-      const res = await axios.post("http://localhost:5000/api/resources", formData, {
+      // Use FormData to send file to backend
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("title", title);
+      formData.append("description", description);
+
+      // Use relative path for deployed backend
+      const backendURL =
+        process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+
+      const res = await axios.post(`${backendURL}/api/resources`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -34,6 +37,8 @@ const ResourceUpload = () => {
 
       alert("Upload successful!");
       console.log("Uploaded resource:", res.data);
+
+      // Reset form
       setFile(null);
       setTitle("");
       setDescription("");

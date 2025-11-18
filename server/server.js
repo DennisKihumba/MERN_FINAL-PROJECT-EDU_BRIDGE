@@ -4,15 +4,14 @@ import cors from "cors";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import forumRoutes from "./routes/forumRoutes.js";
-import http from "http";             // ✅ for Socket.io server
-import { Server } from "socket.io";  // ✅ import Socket.io
-import cloudinary from "./config/cloudinary.js";
-
+import resourceRoutes from "./routes/resourceRoutes.js"; // ✅ Add resource routes
+import http from "http";             
+import { Server } from "socket.io";  
+import cloudinary from "./config/cloudinary.js"; // make sure this is correctly configured
 
 dotenv.config();
 
 const app = express();
-console.log(process.env.PORT),
 app.use(cors());
 app.use(express.json());
 
@@ -21,6 +20,7 @@ connectDB();
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/forum", forumRoutes);
+app.use("/api/resources", resourceRoutes); // ✅ Mount resource routes
 
 app.get("/", (req, res) => res.send("Edu-Bridge API Running..."));
 
@@ -46,7 +46,7 @@ io.on("connection", (socket) => {
 
   // Listen for new threads
   socket.on("createThread", (thread) => {
-    io.emit("newThread", thread); // broadcast to all connected users
+    io.emit("newThread", thread); 
   });
 
   socket.on("disconnect", () => {
