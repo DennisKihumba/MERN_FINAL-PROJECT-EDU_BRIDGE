@@ -9,9 +9,14 @@ const Resources = () => {
   const [uploading, setUploading] = useState(false);
   const token = localStorage.getItem("token");
 
+  // Use backend URL from environment or fallback to localhost
+  const backendURL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
   const fetchResources = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/resources");
+      const res = await axios.get(`${backendURL}/api/resources`, {
+        headers: { Authorization: `Bearer ${token}` }, // optional if API requires auth
+      });
       setResources(res.data);
     } catch (err) {
       console.error("Error fetching resources", err);
@@ -24,6 +29,7 @@ const Resources = () => {
 
   const handleUpload = async (e) => {
     e.preventDefault();
+    if (!file || !title) return alert("Title and file are required");
     setUploading(true);
 
     const formData = new FormData();
@@ -32,7 +38,7 @@ const Resources = () => {
     formData.append("file", file);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/resources", formData, {
+      const res = await axios.post(`${backendURL}/api/resources`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -40,13 +46,13 @@ const Resources = () => {
       });
 
       alert("Upload successful!");
-      fetchResources();
+      fetchResources(); // refresh list
       setTitle("");
       setDescription("");
       setFile(null);
     } catch (err) {
       console.error(err);
-      alert("Upload failed");
+      alert(err.response?.data?.message || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -71,7 +77,7 @@ const Resources = () => {
           onChange={(e) => setDescription(e.target.value)}
           className="border p-2 rounded"
           required
-        ></textarea>
+        />
         <input type="file" onChange={(e) => setFile(e.target.files[0])} required />
         <button
           type="submit"

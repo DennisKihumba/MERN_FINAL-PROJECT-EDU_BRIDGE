@@ -13,7 +13,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      // ✅ Use backend URL from .env
+      const backendURL = process.env.REACT_APP_API_URL;
+
+      const res = await axios.post(`${backendURL}/api/auth/login`, {
         email,
         password,
       });
@@ -21,7 +24,7 @@ const Login = () => {
       localStorage.setItem("token", res.data.token);
       alert("Login successful!");
 
-      // ✅ Use a small delay then force page reload to refresh App.jsx
+      // Reload page to refresh App state
       setTimeout(() => {
         window.location.href = "/";
       }, 500);

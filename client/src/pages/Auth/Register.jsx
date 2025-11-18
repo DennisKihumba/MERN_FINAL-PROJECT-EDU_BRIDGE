@@ -14,15 +14,18 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register", {
+      // ✅ Use backend URL from environment
+      const backendURL = process.env.REACT_APP_API_URL;
+
+      const res = await axios.post(`${backendURL}/api/auth/register`, {
         name,
         email,
         password,
       });
 
-      alert("Registration successful! Redirecting to Forum...");
+      alert("Registration successful! Redirecting...");
       localStorage.setItem("token", res.data.token); // optional: login immediately
-      navigate("/"); // redirect to Forum page
+      navigate("/"); // redirect to home or forum page
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Registration failed");

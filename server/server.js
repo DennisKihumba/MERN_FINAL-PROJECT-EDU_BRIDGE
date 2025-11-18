@@ -4,49 +4,64 @@ import cors from "cors";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import forumRoutes from "./routes/forumRoutes.js";
-import resourceRoutes from "./routes/resourceRoutes.js"; // ✅ Add resource routes
-import http from "http";             
-import { Server } from "socket.io";  
-import cloudinary from "./config/cloudinary.js"; // make sure this is correctly configured
+import resourceRoutes from "./routes/resourceRoutes.js";
+import http from "http";
+import { Server } from "socket.io";
+import cloudinary from "./config/cloudinary.js";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+/* --------------------------- CORS FIX HERE --------------------------- */
+app.use(
+  cors({
+    origin: [
+      "https://edu-bridge-phi.vercel.app", // your deployed client
+      "http://localhost:5173"              // your laptop
+    ],
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true,
+  })
+);
+/* --------------------------------------------------------------------- */
+
 app.use(express.json());
 
 connectDB();
 
-// Routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/forum", forumRoutes);
-app.use("/api/resources", resourceRoutes); // ✅ Mount resource routes
+app.use("/api/resources", resourceRoutes);
 
 app.get("/", (req, res) => res.send("Edu-Bridge API Running..."));
 
-// Create HTTP server and attach Socket.io
+// Socket.io Setup
 const server = http.createServer(app);
+
 const io = new Server(server, {
-  cors: { origin: "*" }, // adjust to your frontend URL in production
+  cors: {
+    origin: [
+      "https://edu-bridge-phi.vercel.app",
+      "http://localhost:5173"
+    ],
+  },
 });
 
-// Socket.io connection
 io.on("connection", (socket) => {
   console.log("A user connected: " + socket.id);
 
-  // Join a thread room
   socket.on("joinThread", (threadId) => {
     socket.join(threadId);
   });
 
-  // Listen for new messages in a thread
   socket.on("sendMessage", (data) => {
     io.to(data.threadId).emit("receiveMessage", data.message);
   });
 
-  // Listen for new threads
   socket.on("createThread", (thread) => {
-    io.emit("newThread", thread); 
+    io.emit("newThread", thread);
   });
 
   socket.on("disconnect", () => {

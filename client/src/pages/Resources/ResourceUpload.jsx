@@ -12,21 +12,19 @@ const ResourceUpload = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file || !title) return alert("Title and file are required");
-
     if (!token) return alert("You must be logged in to upload resources");
 
     setUploading(true);
 
     try {
-      // Use FormData to send file to backend
+      // FormData for file upload
       const formData = new FormData();
       formData.append("file", file);
       formData.append("title", title);
       formData.append("description", description);
 
-      // Use relative path for deployed backend
-      const backendURL =
-        process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+      // Use deployed backend URL from .env
+      const backendURL = process.env.REACT_APP_API_URL; // must be set in client .env
 
       const res = await axios.post(`${backendURL}/api/resources`, formData, {
         headers: {
