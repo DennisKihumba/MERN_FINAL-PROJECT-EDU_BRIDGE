@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { useParams } from "react-router-dom";
+import api from "../../api"; // go up two folders to reach src/api.js
+
 
 const ResourceDetails = () => {
   const { id } = useParams();
@@ -14,28 +15,32 @@ const ResourceDetails = () => {
 
   const fetchResource = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/resources/${id}`, {
+      const res = await api.get(`/api/resources/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setResource(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch resource error:", err.response || err.message);
       alert("Failed to fetch resource");
     }
   };
 
   const handleComment = async () => {
     if (!comment) return;
+
     try {
-      await axios.post(
-        `http://localhost:5000/api/resources/${id}/comment`,
+      await api.post(
+        `/api/resources/${id}/comment`,
         { content: comment },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       alert("Comment added!");
       setComment("");
+      fetchResource(); // Refresh comments after posting
     } catch (err) {
-      console.error(err);
+      console.error("Add comment error:", err.response || err.message);
       alert("Failed to add comment");
     }
   };
@@ -47,6 +52,7 @@ const ResourceDetails = () => {
         <a
           href={resource.link}
           target="_blank"
+          rel="noopener noreferrer"
           className="text-blue-600 hover:underline mb-4 block"
         >
           View/Download Resource
@@ -70,6 +76,7 @@ const ResourceDetails = () => {
             Post
           </button>
         </div>
+
         <div className="space-y-2">
           {resource.comments?.map((c) => (
             <div key={c._id} className="bg-white p-2 rounded shadow">

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../api"; // go up two folders to reach src/api.js
+
 
 const ResourceUpload = () => {
   const [file, setFile] = useState(null);
@@ -23,13 +24,11 @@ const ResourceUpload = () => {
       formData.append("title", title);
       formData.append("description", description);
 
-      // Use deployed backend URL from .env
-      const backendURL = process.env.REACT_APP_API_URL; // must be set in client .env
-
-      const res = await axios.post(`${backendURL}/api/resources`, formData, {
+      // ✅ Use api.js instance instead of manual URL
+      const res = await api.post("/api/resources", formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
       });
 
@@ -41,7 +40,7 @@ const ResourceUpload = () => {
       setTitle("");
       setDescription("");
     } catch (err) {
-      console.error("Upload error:", err.response || err);
+      console.error("Upload error:", err.response || err.message);
       alert(err.response?.data?.message || "Upload failed. Check console for details.");
     } finally {
       setUploading(false);

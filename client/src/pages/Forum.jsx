@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
+import api from "../api"; // go up two folders to reach src/api.js
+
 
 const Forum = () => {
   const [threads, setThreads] = useState([]);
@@ -14,12 +15,12 @@ const Forum = () => {
 
   const fetchThreads = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/forum/threads", {
+      const res = await api.get("/api/forum/threads", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setThreads(res.data);
     } catch (err) {
-      console.error(err);
+      console.error(err.response || err.message);
       alert("Failed to fetch threads");
     }
   };
@@ -30,15 +31,15 @@ const Forum = () => {
     setLoading(true);
 
     try {
-      await axios.post(
-        "http://localhost:5000/api/forum/threads",
+      await api.post(
+        "/api/forum/threads",
         { title },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTitle("");
-      fetchThreads();
+      fetchThreads(); // refresh threads list
     } catch (err) {
-      console.error(err);
+      console.error(err.response || err.message);
       alert("Failed to create thread");
     } finally {
       setLoading(false);

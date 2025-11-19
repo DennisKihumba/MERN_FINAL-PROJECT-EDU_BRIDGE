@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../api"; // go up two folders to reach src/api.js
 
 const Resources = () => {
   const [title, setTitle] = useState("");
@@ -9,17 +9,15 @@ const Resources = () => {
   const [uploading, setUploading] = useState(false);
   const token = localStorage.getItem("token");
 
-  // Use backend URL from environment or fallback to localhost
-  const backendURL = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
   const fetchResources = async () => {
     try {
-      const res = await axios.get(`${backendURL}/api/resources`, {
-        headers: { Authorization: `Bearer ${token}` }, // optional if API requires auth
+      const res = await api.get("/api/resources", {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setResources(res.data);
     } catch (err) {
-      console.error("Error fetching resources", err);
+      console.error("Error fetching resources:", err.response || err.message);
+      alert("Failed to fetch resources");
     }
   };
 
@@ -38,7 +36,7 @@ const Resources = () => {
     formData.append("file", file);
 
     try {
-      const res = await axios.post(`${backendURL}/api/resources`, formData, {
+      await api.post("/api/resources", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -51,7 +49,7 @@ const Resources = () => {
       setDescription("");
       setFile(null);
     } catch (err) {
-      console.error(err);
+      console.error("Upload error:", err.response || err.message);
       alert(err.response?.data?.message || "Upload failed");
     } finally {
       setUploading(false);
@@ -62,7 +60,10 @@ const Resources = () => {
     <div className="p-6 max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-4 text-center">Upload Resource</h2>
 
-      <form onSubmit={handleUpload} className="flex flex-col gap-4 bg-gray-100 p-4 rounded-lg shadow">
+      <form
+        onSubmit={handleUpload}
+        className="flex flex-col gap-4 bg-gray-100 p-4 rounded-lg shadow"
+      >
         <input
           type="text"
           placeholder="Title"
@@ -95,7 +96,12 @@ const Resources = () => {
             <h4 className="font-bold">{r.title}</h4>
             <p>{r.description}</p>
             {r.fileUrl && (
-              <a href={r.fileUrl} target="_blank" rel="noreferrer" className="text-blue-500 underline">
+              <a
+                href={r.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 underline"
+              >
                 View Resource
               </a>
             )}

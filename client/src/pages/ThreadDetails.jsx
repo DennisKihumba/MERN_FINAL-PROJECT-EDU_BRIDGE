@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
-import io from "socket.io-client";
+import api from "../api"; // centralized axios instance
+import { io } from "socket.io-client";
 
 let socket;
 
@@ -14,7 +14,10 @@ const ThreadDetails = () => {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    socket = io("http://localhost:5000", {
+    // Connect to deployed backend socket
+    socket = io(import.meta.env.VITE_API_URL, {
+      withCredentials: true,
+      transports: ["websocket"],
       auth: { token },
     });
 
@@ -23,8 +26,8 @@ const ThreadDetails = () => {
 
     socket.emit("joinThread", id);
 
-    socket.on("newMessage", (msg) => {
-      if (msg.thread === id) setMessages((prev) => [...prev, msg]);
+    socket.on("receiveMessage", (msg) => {
+      if (msg.threadId === id) setMessages((prev) => [...prev, msg]);
     });
 
     return () => {
@@ -39,25 +42,24 @@ const ThreadDetails = () => {
 
   const fetchThread = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/forum/threads/${id}`, {
+      const res = await api.get(`/api/forum/threads/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setThread(res.data);
     } catch (err) {
-      console.error(err);
+      console.error(err.response || err.message);
       alert("Failed to fetch thread");
     }
   };
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/forum/threads/${id}/messages`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await api.get(`/api/forum/threads/${id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setMessages(res.data);
     } catch (err) {
-      console.error(err);
+      console.error(err.response || err.message);
       alert("Failed to fetch messages");
     }
   };
@@ -67,16 +69,17 @@ const ThreadDetails = () => {
     if (!newMessage) return;
 
     try {
-      const res = await axios.post(
-        `http://localhost:5000/api/forum/threads/${id}/messages`,
+      const res = await api.post(
+        `/api/forum/threads/${id}/messages`,
         { content: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      socket.emit("sendMessage", res.data);
+
+      socket.emit("sendMessage", res.data); // notify server
       setNewMessage("");
       setMessages((prev) => [...prev, res.data]);
     } catch (err) {
-      console.error(err);
+      console.error(err.response || err.message);
       alert("Failed to send message");
     }
   };

@@ -1,21 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const SOCKET_URL = import.meta.env.VITE_API_URL; // Use Vite env variable
+const socket = io(SOCKET_URL, {
+  withCredentials: true, // if your server uses cookies
+  transports: ["websocket"], // ensure websocket transport
+});
 
 const Chat = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    socket.on("chatMessage", (msg) => {
+    // Listen for messages from server
+    socket.on("receiveMessage", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
+
+    // Cleanup on unmount
+    return () => {
+      socket.off("receiveMessage");
+    };
   }, []);
 
   const sendMessage = () => {
     if (message.trim() !== "") {
-      socket.emit("chatMessage", message);
+      socket.emit("sendMessage", { message }); // match server-side event
       setMessage("");
     }
   };
@@ -34,9 +44,12 @@ const Chat = () => {
           className="flex-grow border rounded p-2 mr-2"
           placeholder="Type your message..."
           value={message}
-          onChange={(e)=>setMessage(e.target.value)}
+          onChange={(e) => setMessage(e.target.value)}
         />
-        <button onClick={sendMessage} className="bg-blue-600 text-white px-4 py-2 rounded">
+        <button
+          onClick={sendMessage}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
           Send
         </button>
       </div>

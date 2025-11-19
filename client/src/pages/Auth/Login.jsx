@@ -1,8 +1,9 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "../../api"; // make sure this path points to src/api.js
 
-const Login = () => {
+// ✅ Receive onLogin from App to update token state
+const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -13,23 +14,19 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // ✅ Use backend URL from .env
-      const backendURL = process.env.REACT_APP_API_URL;
+      // Use centralized API
+      const res = await api.post("/api/auth/login", { email, password });
 
-      const res = await axios.post(`${backendURL}/api/auth/login`, {
-        email,
-        password,
-      });
-
+      // Save token to localStorage
       localStorage.setItem("token", res.data.token);
-      alert("Login successful!");
 
-      // Reload page to refresh App state
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
+      // ✅ Update App token state
+      onLogin(res.data.token);
+
+      // Redirect to homepage/forum
+      navigate("/");
     } catch (err) {
-      console.error(err);
+      console.error("Login error:", err.response || err.message);
       alert(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);

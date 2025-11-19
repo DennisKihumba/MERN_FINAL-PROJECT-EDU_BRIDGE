@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "../../api"; // go up two folders to reach src/api.js
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -14,20 +14,22 @@ const Register = () => {
     setLoading(true);
 
     try {
-      // ✅ Use backend URL from environment
-      const backendURL = process.env.REACT_APP_API_URL;
-
-      const res = await axios.post(`${backendURL}/api/auth/register`, {
+      // ✅ Use axios instance from api.js which already has baseURL
+      const res = await api.post("/api/auth/register", {
         name,
         email,
         password,
       });
 
       alert("Registration successful! Redirecting...");
-      localStorage.setItem("token", res.data.token); // optional: login immediately
-      navigate("/"); // redirect to home or forum page
+
+      // Optional: log in immediately by saving token
+      localStorage.setItem("token", res.data.token);
+
+      // Redirect to homepage or forum page
+      navigate("/");
     } catch (err) {
-      console.error(err);
+      console.error("Registration error:", err.response || err.message);
       alert(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
